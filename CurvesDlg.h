@@ -32,6 +32,9 @@ protected:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg BOOL OnMouseWheel(UINT nFlgs, short zDelta, CPoint pt);
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+	afx_msg BOOL OnEraseBkgnd(CDC*);
 	DECLARE_MESSAGE_MAP()
 
 private:
@@ -41,6 +44,7 @@ private:
 	void DrawPolynomial(CDC* dc);
 	void Solve();
 	void Evaluate(const Point& pt, double& a, double& b, double& c, double&d, double& v);
+	int FindPoint(const CPoint& pt) const;
 
 private:
 	const int m_margin = 10;
@@ -53,5 +57,7 @@ private:
 	double m_a, m_b, m_c, m_d;
 	bool m_isSolved = false;
 	double m_zoom = 1.0;
+
+	int m_movingIndex = -1;
 };
 

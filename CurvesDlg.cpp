@@ -55,6 +55,9 @@ BEGIN_MESSAGE_MAP(CCurvesDlg, CDialogEx)
 	ON_WM_SIZE()
 	ON_WM_LBUTTONDOWN()
 	ON_WM_MOUSEWHEEL()
+	ON_WM_MOUSEMOVE()
+	ON_WM_LBUTTONUP()
+	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
 BOOL CCurvesDlg::OnInitDialog()
@@ -195,6 +198,13 @@ void CCurvesDlg::OnSize(UINT nType, int cx, int cy)
 void CCurvesDlg::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	Inherit::OnLButtonDown(nFlags, point);
+
+	auto pointBelow = this->FindPoint(point);
+	if(pointBelow != -1)
+	{
+		m_movingIndex = pointBelow;
+		return;
+	}
 
 	if(this->m_points.size() == 4)
 	{
@@ -343,6 +353,59 @@ BOOL CCurvesDlg::OnMouseWheel(UINT nFlgs, short zDelta, CPoint pt)
 	this->UpdateWindow();
 
 	return TRUE;
+}
+
+int CCurvesDlg::FindPoint(const CPoint& pt) const
+{
+	CRect rc;
+	rc.left = rc.right = pt.x;
+	rc.top = rc.bottom = pt.y;
+
+	rc.InflateRect(10, 10);
+
+	for(int i = 0; i < m_points.size(); ++i)
+	{
+		Point ptCur = this->ConvertToWindows(m_points[i]);
+
+		if(rc.PtInRect(CPoint(ptCur.x(), ptCur.y())) == FALSE)
+		{
+			continue;
+		}
+
+		return i;
+	}
+
+	return -1;
+}
+
+void CCurvesDlg::OnMouseMove(UINT nFlags, CPoint point)
+{
+	Inherit::OnMouseMove(nFlags, point);
+
+	if(nFlags & MK_LBUTTON)
+	{
+		if(this->m_movingIndex != -1)
+		{
+			Point pt = this->ConvertToCoordinate(Point(point.x, point.y));
+			this->m_points[this->m_movingIndex] = pt;
+
+			this->Solve();
+
+			this->Invalidate();
+			this->UpdateWindow();
+		}
+	}
+}
+
+void CCurvesDlg::OnLButtonUp(UINT nFlags, CPoint point)
+{
+	Inherit::OnLButtonUp(nFlags, point);
+	this->m_movingIndex = -1;
+}
+
+BOOL CCurvesDlg::OnEraseBkgnd(CDC* pDC)
+{
+	return Inherit::OnEraseBkgnd(pDC);
 }
 
 
