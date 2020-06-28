@@ -3,6 +3,8 @@
 #include <vector>
 #include <Eigen/Core>
 
+#include <glm/matrix.hpp>
+
 class CCurvesDlg : public CDialogEx
 {
 	using Inherit = CDialogEx;
@@ -48,10 +50,10 @@ private:
 	CRect m_rectGraph;
 	Points m_points;
 
-	Matrix3d m_transform;
-
 	double m_a, m_b, m_c, m_d;
 	bool m_isSolved = false;
 	double m_zoom = 1.0;
+
+	glm::dmat4 transform;
 };
 

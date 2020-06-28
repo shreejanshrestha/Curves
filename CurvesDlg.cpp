@@ -3,6 +3,7 @@
 #include "CurvesDlg.h"
 #include "afxdialogex.h"
 #include <Eigen/Dense>
+#include <glm/gtc/matrix_transform.hpp>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -218,43 +219,29 @@ void CCurvesDlg::SetCoordinateRange(double left, double right, double bottom, do
 	bottom *= m_zoom;
 	top *= m_zoom;
 
-	m_transform(0, 0) = 2.0 / (right - left);
-	m_transform(0, 1) = 0.0;
-	m_transform(0, 2) = -1.0 * ((right + left) / (right - left));
-	m_transform(1, 0) = 0.0;
-	m_transform(1, 1) = 2.0 / (top - bottom);
-	m_transform(1, 2) = -1.0 * ((top + bottom) / (top - bottom));
-	m_transform(2, 0) = 0.0;
-	m_transform(2, 1) = 0.0;
-	m_transform(2, 2) = 1.0;
+	this->transform = glm::ortho(left, right, bottom, top);
 }
 
 auto CCurvesDlg::ConvertToCoordinate(const Point& ptWin) const -> Point
 {
-	Point3d pt;
-	pt.x() = (ptWin.x() - m_rectGraph.left) / (double)m_rectGraph.Width() * 2.0 - 1.0;
-	pt.y() = 1.0 - 2.0 * (ptWin.y() - m_rectGraph.top) / (double)m_rectGraph.Height();
-	pt.z() = 1.0;
+	glm::dvec3 pt(ptWin.x(), ptWin.y(), 0);
+	auto model = glm::identity<glm::dmat4>();
+	glm::uvec4 viewport(m_rectGraph.left, m_rectGraph.top, m_rectGraph.Width(), m_rectGraph.Height());
 
-	Matrix3d mInv = this->m_transform.inverse();
+	auto ptCoord = glm::unProject(pt, model, this->transform, viewport);
 
-	Point3d ptRet = mInv * pt;
-
-	return Point(ptRet.x(), ptRet.y());
+	return Point(ptCoord.x, ptCoord.y);
 }
 
 auto CCurvesDlg::ConvertToWindows(const Point& ptCoord) const -> Point
 {
-	Point3d ptTemp(ptCoord.x(), ptCoord.y(), 1);
+	glm::dvec3 pt(ptCoord.x(), ptCoord.y(), 0);
+	auto model = glm::identity<glm::dmat4>();
+	glm::uvec4 viewport(m_rectGraph.left, m_rectGraph.top, m_rectGraph.Width(), m_rectGraph.Height());
 
-	Point3d ret3d = this->m_transform * ptTemp;
+	auto ptWin = glm::project(pt, model, transform, viewport);
 
-	Point ret;
-	ret.x() = (ret3d.x() * 0.5 + 0.5) * m_rectGraph.Width() + m_rectGraph.left;
-	//ret.y() = (ret3d.y() * 0.5 + 0.5) * m_rectGraph.Height() + m_rectGraph.top;
-	ret.y() = (m_rectGraph.Height() - (ret3d.y() * 0.5 + 0.5) * m_rectGraph.Height()) + m_rectGraph.top;
-
-	return ret;
+	return Point(ptWin.x, ptWin.y);
 }
 
 void CCurvesDlg::Solve()
@@ -279,6 +266,15 @@ void CCurvesDlg::Solve()
 
 	this->Evaluate(m_points[3], a, b, c, d, v);
 	mat(3, 0) = a; mat(3, 1) = b; mat(3, 2) = c; mat(3, 3) = d; y[3] = v;
+
+	double det = mat.determinant();
+
+	double eps = 1e-4;
+	if(abs(det) < eps)
+	{
+		this->m_points.clear();
+		return;
+	}
 
 	Eigen::Vector4d coeffs = mat.inverse() * y;
 
