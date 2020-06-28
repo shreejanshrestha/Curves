@@ -19,6 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
+    <VcpkgUserTriplet Condition="'$(Platform)'=='Win32'">x86-windows</VcpkgUserTriplet>
+    <VcpkgUserTriplet Condition="'$(Platform)'=='x64'">x64-windows</VcpkgUserTriplet>
     <ProjectGuid>{ED9883D4-7D2C-412D-BB49-23C1706D6EA6}</ProjectGuid>
     <RootNamespace>Curves</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
@@ -207,6 +209,5 @@
     <Image Include="res\Curves.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-  </ImportGroup>
+  <ImportGroup Label="ExtensionTargets" />
 </Project>
